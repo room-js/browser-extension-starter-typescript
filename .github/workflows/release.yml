@@ -1,0 +1,118 @@
+name: Release Browser Extensions
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  release:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    env:
+      WXT_APP_ENV: "production"
+      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+    concurrency:
+      group: browser-extensions-release
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run type:check
+
+      - name: Build Chrome extension
+        run: pnpm build
+
+      - name: Zip Chrome extension
+        run: pnpm zip
+
+      - name: Upload and publish to Chrome Web Store (optional)
+        if: ${{ secrets.CHROME_EXTENSION_ID != '' && secrets.CHROME_CLIENT_ID != '' && secrets.CHROME_CLIENT_SECRET != '' && secrets.CHROME_REFRESH_TOKEN != '' }}
+        continue-on-error: true
+        uses: mnao305/chrome-extension-upload@v6.0.0
+        with:
+          file-path: .output/*-chrome.zip
+          glob: true
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      - name: Build Firefox extension
+        run: pnpm run build:firefox
+
+      - name: Zip Firefox extension
+        run: pnpm run zip:firefox
+
+      - name: Resolve Firefox addon path
+        id: firefox_addon
+        if: ${{ secrets.FIREFOX_AUTH_API_ISSUER != '' && secrets.FIREFOX_AUTH_API_SECRET != '' }}
+        run: |
+          addon_path="$(ls -t .output/*-firefox.zip | head -n 1)"
+          source_path="${addon_path%-firefox.zip}-sources.zip"
+
+          if [ ! -f "$source_path" ]; then
+            echo "Failed to find source archive for $addon_path" >&2
+            exit 1
+          fi
+
+          echo "addon_path=$addon_path" >> "$GITHUB_OUTPUT"
+          echo "source_path=$source_path" >> "$GITHUB_OUTPUT"
+
+      - name: Capture last commit message
+        id: last_commit
+        if: ${{ secrets.FIREFOX_AUTH_API_ISSUER != '' && secrets.FIREFOX_AUTH_API_SECRET != '' }}
+        run: |
+          {
+            echo "message<<EOF"
+            git log -1 --pretty=%B
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload and publish Firefox addon
+        if: ${{ secrets.FIREFOX_AUTH_API_ISSUER != '' && secrets.FIREFOX_AUTH_API_SECRET != '' }}
+        continue-on-error: true
+        uses: browser-actions/release-firefox-addon@latest
+        with:
+          addon-id: "investorean-stocks-etfs-crypto"
+          license: "MPL-2.0"
+          addon-path: ${{ steps.firefox_addon.outputs.addon_path }}
+          source-path: ${{ steps.firefox_addon.outputs.source_path }}
+          release-note: |
+            Automated release:
+            ${{ steps.last_commit.outputs.message }}
+          approval-note: |
+            Built in GitHub Actions using pnpm.
+            Build command: pnpm run build:firefox
+            Package command: pnpm run zip:firefox
+          auth-api-issuer: ${{ secrets.FIREFOX_AUTH_API_ISSUER }}
+          auth-api-secret: ${{ secrets.FIREFOX_AUTH_API_SECRET }}
+

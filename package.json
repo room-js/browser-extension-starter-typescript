@@ -1,0 +1,35 @@
+{
+  "name": "browser-extension-starter-typescript",
+  "description": "Starter template for browser extensions with WXT, React, TypeScript, Tailwind, and Biome",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "lint": "biome check",
+    "type:check": "tsc --noEmit",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.12",
+    "@tailwindcss/postcss": "4.1.14",
+    "@types/chrome": "0.1.40",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@wxt-dev/module-react": "1.2.2",
+    "autoprefixer": "10.5.0",
+    "postcss": "8.5.10",
+    "tailwindcss": "4.2.2",
+    "typescript": "6.0.3",
+    "wxt": "0.20.25"
+  }
+}

@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+@layer base {
+  body {
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif;
+    background-color: #f4f6fb;
+    color: #1b1f2a;
+  }
+
+  #root {
+    min-width: 320px;
+    min-height: 420px;
+  }
+}
+
+.placeholder-page {
+  display: flex;
+  min-height: 420px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.placeholder-page h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.placeholder-page p {
+  margin: 0;
+  color: #475069;
+}

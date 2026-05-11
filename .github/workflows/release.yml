@@ -20,6 +20,8 @@ jobs:
       CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
       CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
       CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      FIREFOX_AUTH_API_ISSUER: ${{ secrets.FIREFOX_AUTH_API_ISSUER }}
+      FIREFOX_AUTH_API_SECRET: ${{ secrets.FIREFOX_AUTH_API_SECRET }}
     concurrency:
       group: browser-extensions-release
       cancel-in-progress: true
@@ -55,7 +57,7 @@ jobs:
         run: pnpm zip
 
       - name: Upload and publish to Chrome Web Store (optional)
-        if: ${{ secrets.CHROME_EXTENSION_ID != '' && secrets.CHROME_CLIENT_ID != '' && secrets.CHROME_CLIENT_SECRET != '' && secrets.CHROME_REFRESH_TOKEN != '' }}
+        if: env.CHROME_EXTENSION_ID != '' && env.CHROME_CLIENT_ID != '' && env.CHROME_CLIENT_SECRET != '' && env.CHROME_REFRESH_TOKEN != ''
         continue-on-error: true
         uses: mnao305/chrome-extension-upload@v6.0.0
         with:
@@ -74,7 +76,7 @@ jobs:
 
       - name: Resolve Firefox addon path
         id: firefox_addon
-        if: ${{ secrets.FIREFOX_AUTH_API_ISSUER != '' && secrets.FIREFOX_AUTH_API_SECRET != '' }}
+        if: env.FIREFOX_AUTH_API_ISSUER != '' && env.FIREFOX_AUTH_API_SECRET != ''
         run: |
           addon_path="$(ls -t .output/*-firefox.zip | head -n 1)"
           source_path="${addon_path%-firefox.zip}-sources.zip"
@@ -89,7 +91,7 @@ jobs:
 
       - name: Capture last commit message
         id: last_commit
-        if: ${{ secrets.FIREFOX_AUTH_API_ISSUER != '' && secrets.FIREFOX_AUTH_API_SECRET != '' }}
+        if: env.FIREFOX_AUTH_API_ISSUER != '' && env.FIREFOX_AUTH_API_SECRET != ''
         run: |
           {
             echo "message<<EOF"
@@ -98,7 +100,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload and publish Firefox addon
-        if: ${{ secrets.FIREFOX_AUTH_API_ISSUER != '' && secrets.FIREFOX_AUTH_API_SECRET != '' }}
+        if: env.FIREFOX_AUTH_API_ISSUER != '' && env.FIREFOX_AUTH_API_SECRET != ''
         continue-on-error: true
         uses: browser-actions/release-firefox-addon@latest
         with:
